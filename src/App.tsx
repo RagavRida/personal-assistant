@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   HelpCircle,
   MessageSquareText,
-  RotateCcw,
+  Plus,
   Sparkles,
 } from 'lucide-react';
 
@@ -143,10 +143,24 @@ export default function App() {
     }
   };
 
-  const handleResetChat = () => {
+  const handleNewChat = async () => {
     setMessages([...INITIAL_MESSAGES]);
     setIsAssistantReplying(false);
-    addLog('Conversation state cleared.');
+    addLog('Starting new conversation...');
+
+    if (googleStatus.connected) {
+      try {
+        const response = await fetch('/api/conversations/new', { method: 'POST' });
+
+        if (response.ok) {
+          addLog('New conversation created.');
+        } else {
+          addLog('New conversation created locally (server sync skipped).');
+        }
+      } catch {
+        addLog('New conversation created locally.');
+      }
+    }
   };
 
   const handleJumpToMessage = (messageId: string) => {
@@ -390,11 +404,11 @@ export default function App() {
             </h2>
             <div className="space-y-2 px-1">
               <button
-                onClick={handleResetChat}
-                className="w-full inline-flex items-center justify-center space-x-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                onClick={handleNewChat}
+                className="w-full inline-flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset Chat View</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Chat</span>
               </button>
             </div>
           </div>
@@ -433,11 +447,11 @@ export default function App() {
           </div>
 
           <button
-            onClick={handleResetChat}
-            title="Reset Chat View"
-            className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500"
+            onClick={handleNewChat}
+            title="New Chat"
+            className="p-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
           >
-            <RotateCcw className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
