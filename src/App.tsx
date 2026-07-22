@@ -15,6 +15,7 @@ import {
   INITIAL_MESSAGES,
   Message,
   PendingConfirmation,
+  SCENARIOS,
 } from './lib/conversation';
 
 import ChatInput from './components/ChatInput';
@@ -591,6 +592,34 @@ export default function App() {
                   <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-xs text-gray-400 font-sans italic">Workspace AI is thinking...</span>
+              </motion.div>
+            )}
+
+            {!isAssistantReplying && messages.length <= 1 && googleStatus.connected && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-4"
+              >
+                {SCENARIOS.map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    onClick={() => handleSendMessage(scenario.starters[0])}
+                    className="group text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md hover:bg-indigo-50/30"
+                  >
+                    <p className="text-sm font-semibold text-gray-800 group-hover:text-indigo-700 transition-colors">
+                      {scenario.name}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                      {scenario.description}
+                    </p>
+                    <p className="mt-2 text-[11px] text-indigo-500 font-mono truncate">
+                      &ldquo;{scenario.starters[0]}&rdquo;
+                    </p>
+                  </button>
+                ))}
               </motion.div>
             )}
 

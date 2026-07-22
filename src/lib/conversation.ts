@@ -47,50 +47,50 @@ export interface Scenario {
   starters: string[];
 }
 
-export const SCENARIOS: Record<string, Scenario> = {
-  create_event: {
+export const SCENARIOS: Scenario[] = [
+  {
     id: 'create_event',
-    name: 'Create Calendar Event',
-    description: 'Try a direct scheduling request with a clear title, date, and time.',
-    starters: ['Schedule a project review for tomorrow at 2 PM', 'Book a quick coffee chat with Sarah at 10 AM'],
+    name: '📅 Schedule Event',
+    description: 'Create a calendar event with a clear title, date, and time.',
+    starters: ['Schedule a team meeting tomorrow at 3 PM', 'Book a coffee chat with Sarah at 10 AM on Friday'],
   },
-  clarification: {
-    id: 'clarification',
-    name: 'Clarifying Question',
-    description: 'Try a request that should make the assistant ask for missing details.',
-    starters: ['Schedule team lunch this Friday', 'Remind me to update my report'],
+  {
+    id: 'list_events',
+    name: '🗓️ View Calendar',
+    description: 'See what\'s on your calendar for a specific time range.',
+    starters: ['What does my calendar look like this week?', 'Do I have any meetings tomorrow?'],
   },
-  delete_confirm: {
-    id: 'delete_confirm',
-    name: 'Delete Confirmation',
-    description: 'Try a delete request that should require plain-text confirmation first.',
-    starters: ['Delete the standup meeting on Friday', 'Clear my entire afternoon calendar'],
+  {
+    id: 'create_task',
+    name: '✅ Create Task',
+    description: 'Add a new task with an optional due date.',
+    starters: ['Create a task to submit the monthly report by Monday', 'Remind me to buy groceries this weekend'],
   },
-  error_state: {
-    id: 'error_state',
-    name: 'Missing Item',
-    description: 'Try a request where the assistant needs to search and may find no match.',
-    starters: ['Move my made-up event to Monday', 'Find my task about buying a moon base'],
-  },
-  show_tasks: {
+  {
     id: 'show_tasks',
-    name: 'Show Weekly Tasks',
-    description: 'Try live Google Tasks listing and task-focused requests.',
-    starters: ['What are my tasks for this week?', 'Show my pending checklists'],
+    name: '📋 View Tasks',
+    description: 'List your pending or completed tasks.',
+    starters: ['Show me all tasks due this week', 'What tasks do I have pending?'],
   },
-  email: {
-    id: 'email',
-    name: 'Gmail & Contacts',
-    description: 'Try reading, searching, or sending emails via natural language.',
-    starters: ['Show my latest emails', 'Do I have any unread emails from today?'],
+  {
+    id: 'clarification',
+    name: '💬 Ambiguous Request',
+    description: 'The assistant will ask for missing details instead of guessing.',
+    starters: ['Schedule lunch with John', 'Move my Friday meeting'],
   },
-};
+  {
+    id: 'delete_confirm',
+    name: '🗑️ Delete with Confirmation',
+    description: 'Delete requests require explicit confirmation first.',
+    starters: ['Delete my dentist appointment', 'Remove the standup meeting on Friday'],
+  },
+];
 
 export const INITIAL_MESSAGES: Message[] = [
   {
     id: 'welcome',
     sender: 'assistant',
-    text: 'Hello there! I am your Google Workspace personal assistant. I can manage your **Google Calendar**, **Google Tasks**, **Gmail**, and **Google Contacts** using natural language.\n\nTry things like:\n- "Schedule a meeting with John tomorrow at 3 PM"\n- "Show my unread emails"\n- "Send an email to Sarah about the project update"\n- "What tasks do I have this week?"\n\nChoose a starter prompt or type a request.',
+    text: 'Hello there! I am your Google Workspace personal assistant. I can use OpenAI tool calling to create, find, update, list, and delete Google Calendar events and Google Tasks.\n\nChoose a starter prompt or type a natural-language request.',
     timestamp: new Date(),
   },
 ];
