@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     const conversation = await getOrCreateActiveConversation(user.id);
-    const storedMessages = await getConversationMessages(conversation.id);
+    const { messages: storedMessages } = await getConversationMessages(conversation.id, { limit: 20 });
     const history = storedMessages.map(toClientChatMessage).filter((item): item is ClientChatMessage => item !== null);
 
     await appendMessage(conversation.id, {

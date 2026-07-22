@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { clearSessionCookie, getSessionUserId } from '@/src/lib/auth/session';
 import {
   getConversationMessages,
@@ -12,7 +12,7 @@ import type { ConversationContextItem, PendingConfirmation } from '@/src/lib/ope
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const userId = await getSessionUserId();
 
@@ -27,12 +27,17 @@ export async function GET() {
       return authRequiredResponse();
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '50', 10) || 50, 1), 100);
+    const before = searchParams.get('before') ?? undefined;
+
     const conversation = await getOrCreateActiveConversation(user.id);
-    const storedMessages = await getConversationMessages(conversation.id);
+    const { messages: storedMessages, hasMore } = await getConversationMessages(conversation.id, { limit, before });
 
     return NextResponse.json({
       conversationId: conversation.id,
       messages: storedMessages.map(toClientMessage).filter((message) => message !== null),
+      hasMore,
     });
   } catch (error) {
     if (error instanceof DatabaseConfigurationError || error instanceof DatabaseUnavailableError) {
@@ -40,6 +45,7 @@ export async function GET() {
       return NextResponse.json(
         {
           messages: [],
+          hasMore: false,
           error: 'database_unavailable',
         },
         { status: 503 }
@@ -50,6 +56,7 @@ export async function GET() {
     return NextResponse.json(
       {
         messages: [],
+        hasMore: false,
         error: 'history_unavailable',
       },
       { status: 500 }

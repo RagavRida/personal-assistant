@@ -71,19 +71,44 @@ export async function getOrCreateActiveConversation(userId: string) {
   return createConversation(userId);
 }
 
-export async function getConversationMessages(conversationId: string) {
+export interface PaginatedMessages {
+  messages: StoredMessage[];
+  hasMore: boolean;
+}
+
+export async function getConversationMessages(
+  conversationId: string,
+  options?: { limit?: number; before?: string }
+): Promise<PaginatedMessages> {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
+  const limit = options?.limit ?? 50;
+  const fetchCount = limit + 1;
+
+  let query = supabase
     .from('messages')
     .select('id, conversation_id, role, content, tool_calls, created_at')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false })
+    .limit(fetchCount);
+
+  if (options?.before) {
+    query = query.lt('created_at', options.before);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw toDatabaseError(error, 'Unable to load conversation messages.');
   }
 
-  return (data ?? []) as StoredMessage[];
+  const rows = data ?? [];
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  return {
+    messages: page.reverse() as StoredMessage[],
+    hasMore,
+  };
 }
 
 export async function appendMessage(

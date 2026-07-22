@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+  ChevronUp,
   HelpCircle,
   MessageSquareText,
   Plus,
@@ -45,6 +46,7 @@ interface HistoryApiMessage {
 
 interface ConversationHistoryResponse {
   messages?: HistoryApiMessage[];
+  hasMore?: boolean;
   requiresReauth?: boolean;
   error?: string;
 }
@@ -54,6 +56,8 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSynced, setLastSynced] = useState<Date>(new Date());
   const [isAssistantReplying, setIsAssistantReplying] = useState<boolean>(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(false);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [googleStatus, setGoogleStatus] = useState({
     connected: false,
     checking: true,
@@ -81,7 +85,7 @@ export default function App() {
 
     async function loadConversationHistory() {
       try {
-        const response = await fetch('/api/conversations/history', { cache: 'no-store' });
+        const response = await fetch('/api/conversations/history?limit=50', { cache: 'no-store' });
 
         if (!response.ok) {
           return;
@@ -94,6 +98,7 @@ export default function App() {
 
         if (!isCancelled && storedMessages.length > 0) {
           setMessages([...INITIAL_MESSAGES, ...storedMessages]);
+          setHasMoreMessages(data.hasMore ?? false);
         }
       } catch {
         // Keep the initial local welcome message if history cannot be loaded.
@@ -146,6 +151,7 @@ export default function App() {
   const handleNewChat = async () => {
     setMessages([...INITIAL_MESSAGES]);
     setIsAssistantReplying(false);
+    setHasMoreMessages(false);
     addLog('Starting new conversation...');
 
     if (googleStatus.connected) {
@@ -160,6 +166,48 @@ export default function App() {
       } catch {
         addLog('New conversation created locally.');
       }
+    }
+  };
+
+  const handleLoadOlderMessages = async () => {
+    if (isLoadingMore || !hasMoreMessages) return;
+
+    const nonWelcomeMessages = messages.filter((m) => m.id !== 'welcome');
+    const oldestMessage = nonWelcomeMessages[0];
+    if (!oldestMessage) return;
+
+    setIsLoadingMore(true);
+
+    try {
+      const before = oldestMessage.timestamp.toISOString();
+      const response = await fetch(`/api/conversations/history?limit=50&before=${encodeURIComponent(before)}`, {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        addLog('Failed to load earlier messages.');
+        return;
+      }
+
+      const data = (await response.json()) as ConversationHistoryResponse;
+      const olderMessages = Array.isArray(data.messages)
+        ? data.messages.map(toMessageFromHistoryApi).filter((msg): msg is Message => msg !== null)
+        : [];
+
+      if (olderMessages.length > 0) {
+        setMessages((prev) => {
+          const welcomeMessages = prev.filter((m) => m.id === 'welcome');
+          const existingMessages = prev.filter((m) => m.id !== 'welcome');
+          return [...welcomeMessages, ...olderMessages, ...existingMessages];
+        });
+        addLog(`Loaded ${olderMessages.length} earlier messages.`);
+      }
+
+      setHasMoreMessages(data.hasMore ?? false);
+    } catch {
+      addLog('Failed to load earlier messages.');
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -464,6 +512,27 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar bg-slate-50/50">
           <div className="max-w-4xl mx-auto space-y-2">
+            {hasMoreMessages && (
+              <div className="flex justify-center pb-2">
+                <button
+                  onClick={handleLoadOlderMessages}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-indigo-600 bg-white border border-indigo-200 rounded-full hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronUp className="w-3.5 h-3.5" />
+                      Load earlier messages
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
             <AnimatePresence initial={false}>
               {messages.map((message) => (
                 <ChatMessage
