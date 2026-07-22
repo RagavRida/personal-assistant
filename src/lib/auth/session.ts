@@ -11,6 +11,9 @@ export const GOOGLE_OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/contacts.readonly',
 ];
 
 export const SESSION_COOKIE_NAME = 'workspace_ai_session';

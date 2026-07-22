@@ -299,4 +299,98 @@ export const calendarTaskTools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'list_emails',
+      description: 'List emails from the user\'s Gmail inbox. Supports Gmail search queries.',
+      parameters: {
+        type: 'object',
+        description: 'Optional search query and max results.',
+        properties: {
+          query: {
+            type: 'string',
+            description:
+              'Optional Gmail search query (e.g. "from:john", "is:unread", "subject:meeting"). Defaults to inbox.',
+          },
+          max_results: {
+            type: 'number',
+            description: 'Max emails to return (1-10). Defaults to 5.',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_email',
+      description: 'Read the full body of a specific email by its ID.',
+      parameters: {
+        type: 'object',
+        description: 'Email message ID.',
+        properties: {
+          email_id: {
+            type: 'string',
+            description: 'Gmail message ID.',
+          },
+        },
+        required: ['email_id'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'send_email',
+      description: 'Send an email from the user\'s Gmail account.',
+      parameters: {
+        type: 'object',
+        description: 'Email details.',
+        properties: {
+          to: {
+            type: 'string',
+            description: 'Recipient email address.',
+          },
+          subject: {
+            type: 'string',
+            description: 'Email subject line.',
+          },
+          body: {
+            type: 'string',
+            description: 'Plain text email body.',
+          },
+        },
+        required: ['to', 'subject', 'body'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_contacts',
+      description: 'Search the user\'s Google Contacts by name or email. Use this to resolve a person\'s name to their email address before sending emails or adding attendees.',
+      parameters: {
+        type: 'object',
+        description: 'Contact search query.',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Name or email to search for (e.g. "John", "jane@example.com").',
+          },
+          max_results: {
+            type: 'number',
+            description: 'Max contacts to return (1-20). Defaults to 10.',
+          },
+        },
+        required: ['query'],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
+

@@ -30,6 +30,18 @@ import {
   type ListTasksArgs,
   type UpdateTaskArgs,
 } from '@/src/lib/google/tasks';
+import {
+  list_emails,
+  read_email,
+  send_email,
+  type ListEmailsArgs,
+  type ReadEmailArgs,
+  type SendEmailArgs,
+} from '@/src/lib/google/gmail';
+import {
+  search_contacts,
+  type SearchContactsArgs,
+} from '@/src/lib/google/contacts';
 
 type ToolArgs = Record<string, unknown>;
 
@@ -48,6 +60,10 @@ const toolExecutors: Record<string, (args: ToolArgs) => Promise<unknown>> = {
   delete_task: (args) => delete_task(args as unknown as DeleteTaskArgs),
   find_event: (args) => find_event(args as unknown as FindEventArgs),
   find_task: (args) => find_task(args as unknown as FindTaskArgs),
+  list_emails: (args) => list_emails(args as unknown as ListEmailsArgs),
+  read_email: (args) => read_email(args as unknown as ReadEmailArgs),
+  send_email: (args) => send_email(args as unknown as SendEmailArgs),
+  search_contacts: (args) => search_contacts(args as unknown as SearchContactsArgs),
 };
 
 export async function executeToolCall(

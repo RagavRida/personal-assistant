@@ -1,7 +1,7 @@
 # Architecture & Design
 
 ## Overview
-This application is a Personal Assistant built with Next.js that integrates with a user's Google Calendar and Google Tasks via Google OAuth2. It provides a conversational interface powered by OpenAI's Large Language Models (LLMs) equipped with tool-calling capabilities to perform actions on behalf of the user.
+This application is a Personal Assistant built with Next.js that integrates with a user's Google Calendar, Google Tasks, Gmail, and Google Contacts via Google OAuth2. It provides a conversational interface powered by OpenAI's Large Language Models (LLMs) equipped with tool-calling capabilities to perform actions on behalf of the user.
 
 ## Tech Stack
 - **Frontend**: Next.js (React), Tailwind CSS
@@ -19,18 +19,18 @@ graph TD
     
     Backend <-->|Fetch/Store Auth Tokens & Chat History| Supabase[(Supabase PostgreSQL)]
     Backend <-->|Prompts & Tool Calls| OpenAI(OpenAI gpt-4o)
-    Backend <-->|Read/Write Calendar & Tasks| Google(Google APIs)
+    Backend <-->|Read/Write Calendar, Tasks, Gmail & Contacts| Google(Google APIs)
 ```
 
 ## Core Components
 ### 1. Authentication Flow
-- **Google OAuth**: Users authenticate with their Google accounts to grant the app access to Calendar and Tasks.
+- **Google OAuth**: Users authenticate with their Google accounts to grant the app access to Calendar, Tasks, Gmail, and Contacts.
 - **Session Management**: OAuth tokens (Access and Refresh) are securely stored in the Supabase `users` table. The client only receives a lightweight, encrypted `httpOnly` session cookie containing the `userId`.
 - **Token Refresh**: The backend automatically refreshes Google access tokens when they expire, ensuring uninterrupted service.
 
 ### 2. Conversational AI & Tool Calling
 - **OpenAI Integration**: User queries are sent to OpenAI's API.
-- **Tool Definitions**: The system prompt equips the LLM with specific "tools" (functions) such as `get_calendar_events`, `create_task`, `delete_event`, etc.
+- **Tool Definitions**: The system prompt equips the LLM with specific "tools" (functions) such as `list_events`, `create_task`, `delete_event`, `list_emails`, `send_email`, `search_contacts`, etc.
 - **Execution Loop**: When the LLM decides to call a tool, the backend intercepts the request, executes the corresponding Google API call using the user's stored OAuth tokens, and returns the result to the LLM to formulate a natural language response.
 
 ### 3. Data Persistence

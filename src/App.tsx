@@ -689,6 +689,10 @@ function formatToolActionText(toolCalls: ChatApiToolCall[]) {
     delete_task: '✅ Deleting task...',
     find_event: '🔎 Finding calendar event...',
     find_task: '🔎 Finding task...',
+    list_emails: '📧 Reading emails...',
+    read_email: '📧 Opening email...',
+    send_email: '📧 Sending email...',
+    search_contacts: '👤 Searching contacts...',
   };
   const uniqueLabels = Array.from(new Set(toolCalls.map((toolCall) => labels[toolCall.name] ?? toolCall.name)));
 

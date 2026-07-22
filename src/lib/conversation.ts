@@ -78,13 +78,20 @@ export const SCENARIOS: Record<string, Scenario> = {
     description: 'Try live Google Tasks listing and task-focused requests.',
     starters: ['What are my tasks for this week?', 'Show my pending checklists'],
   },
+  email: {
+    id: 'email',
+    name: 'Gmail & Contacts',
+    description: 'Try reading, searching, or sending emails via natural language.',
+    starters: ['Show my latest emails', 'Do I have any unread emails from today?'],
+  },
 };
 
 export const INITIAL_MESSAGES: Message[] = [
   {
     id: 'welcome',
     sender: 'assistant',
-    text: 'Hello there! I am your Google Workspace personal assistant. I can use OpenAI tool calling to create, find, update, list, and delete Google Calendar events and Google Tasks.\n\nChoose a starter prompt or type a natural-language request.',
+    text: 'Hello there! I am your Google Workspace personal assistant. I can manage your **Google Calendar**, **Google Tasks**, **Gmail**, and **Google Contacts** using natural language.\n\nTry things like:\n- "Schedule a meeting with John tomorrow at 3 PM"\n- "Show my unread emails"\n- "Send an email to Sarah about the project update"\n- "What tasks do I have this week?"\n\nChoose a starter prompt or type a request.',
     timestamp: new Date(),
   },
 ];
+

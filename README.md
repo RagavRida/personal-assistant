@@ -1,6 +1,6 @@
 # 🤖 Personal Assistant — AI-Powered Google Workspace Manager
 
-> A conversational AI assistant that manages your **Google Calendar** and **Google Tasks** through natural language, powered by OpenAI function calling.
+> A conversational AI assistant that manages your **Google Calendar**, **Google Tasks**, **Gmail**, and **Google Contacts** through natural language, powered by OpenAI function calling.
 
 [![Live Demo](https://img.shields.io/badge/Live-personal--assistant--hxty.onrender.com-blue?style=for-the-badge&logo=render)](https://personal-assistant-hxty.onrender.com)
 [![GitHub](https://img.shields.io/badge/GitHub-RagavRida%2Fpersonal--assistant-black?style=for-the-badge&logo=github)](https://github.com/RagavRida/personal-assistant)
@@ -9,9 +9,11 @@
 
 ## ✨ Features
 
-- **Natural Language Interface** — Chat with your calendar and tasks using everyday language
+- **Natural Language Interface** — Chat with your calendar, tasks, and email using everyday language
 - **Google Calendar Integration** — Create, update, delete, list, and reschedule events
 - **Google Tasks Integration** — Create, update, complete, delete, and list tasks
+- **Gmail Integration** — Search inbox, read emails, and send emails via natural language
+- **Google Contacts Integration** — Look up contacts by name to resolve email addresses for sending or scheduling
 - **Smart Tool Calling** — OpenAI function calling routes your intent to the correct Google API
 - **Conversation History** — Full chat persistence with Supabase Postgres
 - **Secure OAuth2** — Server-side token storage with signed HTTP-only session cookies
@@ -29,7 +31,7 @@ graph TD
 
     Backend <-->|"Fetch/Store Auth Tokens & Chat History"| Supabase[("🗄️ Supabase PostgreSQL")]:::supabase
     Backend <-->|"Prompts & Tool Calls"| OpenAI("🧠 OpenAI gpt-4o"):::openai
-    Backend <-->|"Read/Write Calendar & Tasks"| Google("📅 Google APIs"):::google
+    Backend <-->|"Read/Write Calendar, Tasks, Gmail & Contacts"| Google("📅 Google APIs"):::google
 
     classDef client fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#312e81
     classDef nextjs fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d
@@ -61,7 +63,7 @@ graph TD
 ### Prerequisites
 
 - Node.js 18+
-- A [Google Cloud](https://console.cloud.google.com) project with Calendar & Tasks APIs enabled
+- A [Google Cloud](https://console.cloud.google.com) project with Calendar, Tasks, Gmail, and People APIs enabled
 - A [Supabase](https://supabase.com) project
 - An [OpenAI](https://platform.openai.com) API key
 
@@ -113,7 +115,7 @@ cp .env.example .env.local
 ### 4. Set Up Google Cloud
 
 1. Create a project at [console.cloud.google.com](https://console.cloud.google.com).
-2. Enable **Google Calendar API** and **Google Tasks API**.
+2. Enable **Google Calendar API**, **Google Tasks API**, **Gmail API**, and **People API**.
 3. Configure **OAuth consent screen** → External → add your Google account as a test user.
 4. Create **OAuth 2.0 Client ID** (Web application) with redirect URI:
    ```
