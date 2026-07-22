@@ -4,6 +4,8 @@ This Next.js app connects a user's Google Calendar and Google Tasks account thro
 
 Google OAuth tokens are stored server-side in Postgres. The browser only receives a lightweight signed `httpOnly` session cookie containing the app `userId`.
 
+For a deeper dive into the system design, please see the [Architecture & Design](ARCHITECTURE.md) document.
+
 ## Setup
 
 1. Install dependencies:
@@ -100,3 +102,16 @@ For delete requests, the assistant should ask for confirmation first. Send `yes,
 - If the Supabase environment variables are missing or the database is unavailable, `/api/chat` returns a clear "assistant temporarily unavailable" message instead of a raw 500.
 - If the signed session cookie exists but the user row no longer exists, the app clears the cookie and prompts the user to reconnect Google.
 - If Google token refresh fails, the assistant returns `requiresReauth: true` so the UI can show a reconnect button.
+
+## Deployment
+
+To deploy this application and link it to your GitHub repository:
+
+1. Push your code to a public or private GitHub repository (already done if following the assignment instructions).
+2. Go to [Vercel](https://vercel.com) and sign in.
+3. Click **Add New...** > **Project**.
+4. Import your newly created GitHub repository.
+5. Under **Environment Variables**, copy all the variables from your `.env.local` file and paste them into Vercel.
+6. Make sure to update the `GOOGLE_REDIRECT_URI` in Vercel to match your production URL (e.g., `https://your-app-domain.vercel.app/api/auth/google/callback`).
+7. Update your Google Cloud Console OAuth credentials to include the new production redirect URI.
+8. Click **Deploy**. Vercel will automatically build and deploy your application on every push to the `main` branch.
