@@ -103,15 +103,33 @@ For delete requests, the assistant should ask for confirmation first. Send `yes,
 - If the signed session cookie exists but the user row no longer exists, the app clears the cookie and prompts the user to reconnect Google.
 - If Google token refresh fails, the assistant returns `requiresReauth: true` so the UI can show a reconnect button.
 
-## Deployment
+## Deployment (Render)
 
-To deploy this application and link it to your GitHub repository:
+This project includes a `render.yaml` blueprint for one-click deployment on [Render](https://render.com).
 
-1. Push your code to a public or private GitHub repository (already done if following the assignment instructions).
-2. Go to [Vercel](https://vercel.com) and sign in.
-3. Click **Add New...** > **Project**.
-4. Import your newly created GitHub repository.
-5. Under **Environment Variables**, copy all the variables from your `.env.local` file and paste them into Vercel.
-6. Make sure to update the `GOOGLE_REDIRECT_URI` in Vercel to match your production URL (e.g., `https://your-app-domain.vercel.app/api/auth/google/callback`).
-7. Update your Google Cloud Console OAuth credentials to include the new production redirect URI.
-8. Click **Deploy**. Vercel will automatically build and deploy your application on every push to the `main` branch.
+### Option A – Blueprint (recommended)
+
+1. Push your code to a public GitHub repository.
+2. Go to [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint**.
+3. Connect your GitHub repo (`RagavRida/personal-assistant`).
+4. Render will detect `render.yaml` and pre-fill the service configuration.
+5. Fill in the environment variables it prompts for (all the values from your `.env.local`).
+6. Set `GOOGLE_REDIRECT_URI` to `https://<your-render-domain>.onrender.com/api/auth/google/callback`.
+7. Click **Apply**. Render will build and deploy the app automatically.
+
+### Option B – Manual setup
+
+1. Go to [Render Dashboard](https://dashboard.render.com) → **New** → **Web Service**.
+2. Connect your GitHub repo.
+3. Configure:
+   - **Runtime**: Node
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+4. Add all environment variables from `.env.local` under **Environment**.
+5. Set `GOOGLE_REDIRECT_URI` to `https://<your-render-domain>.onrender.com/api/auth/google/callback`.
+6. Click **Deploy**.
+
+### Post-deployment
+
+- Copy your Render service URL (e.g., `https://personal-assistant-xxxx.onrender.com`).
+- Go to your [Google Cloud Console](https://console.cloud.google.com) OAuth credentials and add `https://<your-render-domain>.onrender.com/api/auth/google/callback` to **Authorized redirect URIs**.
