@@ -71,6 +71,70 @@ export async function getOrCreateActiveConversation(userId: string) {
   return createConversation(userId);
 }
 
+export interface ConversationListItem {
+  id: string;
+  title: string | null;
+  preview: string | null;
+  updated_at: string;
+}
+
+export async function listConversations(userId: string, limit = 20): Promise<ConversationListItem[]> {
+  const supabase = getSupabaseServerClient();
+
+  const { data: conversations, error } = await supabase
+    .from('conversations')
+    .select('id, title, updated_at')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw toDatabaseError(error, 'Unable to list conversations.');
+  }
+
+  if (!conversations || conversations.length === 0) {
+    return [];
+  }
+
+  const conversationIds = conversations.map((c) => c.id);
+  const { data: firstMessages } = await supabase
+    .from('messages')
+    .select('conversation_id, content')
+    .in('conversation_id', conversationIds)
+    .eq('role', 'user')
+    .order('created_at', { ascending: true });
+
+  const previewMap = new Map<string, string>();
+  for (const msg of firstMessages ?? []) {
+    if (!previewMap.has(msg.conversation_id)) {
+      previewMap.set(msg.conversation_id, msg.content);
+    }
+  }
+
+  return conversations.map((c) => ({
+    id: c.id,
+    title: c.title ?? null,
+    preview: previewMap.get(c.id)?.slice(0, 80) ?? null,
+    updated_at: c.updated_at,
+  }));
+}
+
+export async function getConversationById(conversationId: string, userId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('id, user_id, title, created_at, updated_at')
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw toDatabaseError(error, 'Unable to load conversation.');
+  }
+
+  return data as ConversationRecord | null;
+}
+
 export interface PaginatedMessages {
   messages: StoredMessage[];
   hasMore: boolean;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clearSessionCookie, getSessionUserId } from '@/src/lib/auth/session';
 import {
+  getConversationById,
   getConversationMessages,
   getOrCreateActiveConversation,
   type MessageMetadata,
@@ -30,8 +31,21 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '50', 10) || 50, 1), 100);
     const before = searchParams.get('before') ?? undefined;
+    const requestedConversationId = searchParams.get('conversationId') ?? undefined;
 
-    const conversation = await getOrCreateActiveConversation(user.id);
+    let conversation;
+    if (requestedConversationId) {
+      conversation = await getConversationById(requestedConversationId, user.id);
+      if (!conversation) {
+        return NextResponse.json(
+          { messages: [], hasMore: false, error: 'conversation_not_found' },
+          { status: 404 }
+        );
+      }
+    } else {
+      conversation = await getOrCreateActiveConversation(user.id);
+    }
+
     const { messages: storedMessages, hasMore } = await getConversationMessages(conversation.id, { limit, before });
 
     return NextResponse.json({

@@ -45,10 +45,18 @@ interface HistoryApiMessage {
 }
 
 interface ConversationHistoryResponse {
+  conversationId?: string;
   messages?: HistoryApiMessage[];
   hasMore?: boolean;
   requiresReauth?: boolean;
   error?: string;
+}
+
+interface SidebarConversation {
+  id: string;
+  title: string | null;
+  preview: string | null;
+  updated_at: string;
 }
 
 export default function App() {
@@ -58,6 +66,8 @@ export default function App() {
   const [isAssistantReplying, setIsAssistantReplying] = useState<boolean>(false);
   const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<SidebarConversation[]>([]);
   const [googleStatus, setGoogleStatus] = useState({
     connected: false,
     checking: true,
@@ -68,10 +78,6 @@ export default function App() {
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatHistoryEntries = messages
-    .filter((message) => message.sender === 'user' && message.text.trim().length > 0)
-    .slice(-12)
-    .reverse();
   const inputDisabledReason = googleStatus.checking
     ? 'Checking Google connection...'
     : !googleStatus.connected
@@ -80,37 +86,55 @@ export default function App() {
         ? 'Assistant is crafting a response...'
         : undefined;
 
-  useEffect(() => {
-    let isCancelled = false;
-
-    async function loadConversationHistory() {
-      try {
-        const response = await fetch('/api/conversations/history?limit=50', { cache: 'no-store' });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = (await response.json()) as ConversationHistoryResponse;
-        const storedMessages = Array.isArray(data.messages)
-          ? data.messages.map(toMessageFromHistoryApi).filter((message): message is Message => message !== null)
-          : [];
-
-        if (!isCancelled && storedMessages.length > 0) {
-          setMessages([...INITIAL_MESSAGES, ...storedMessages]);
-          setHasMoreMessages(data.hasMore ?? false);
-        }
-      } catch {
-        // Keep the initial local welcome message if history cannot be loaded.
+  const loadConversations = useCallback(async () => {
+    try {
+      const response = await fetch('/api/conversations', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(Array.isArray(data.conversations) ? data.conversations : []);
       }
+    } catch {
+      // Sidebar list is non-critical
     }
-
-    loadConversationHistory();
-
-    return () => {
-      isCancelled = true;
-    };
   }, []);
+
+  const loadConversationMessages = useCallback(async (conversationId?: string) => {
+    try {
+      const url = conversationId
+        ? `/api/conversations/history?limit=50&conversationId=${encodeURIComponent(conversationId)}`
+        : '/api/conversations/history?limit=50';
+      const response = await fetch(url, { cache: 'no-store' });
+
+      if (!response.ok) return;
+
+      const data = (await response.json()) as ConversationHistoryResponse;
+      const storedMessages = Array.isArray(data.messages)
+        ? data.messages.map(toMessageFromHistoryApi).filter((message): message is Message => message !== null)
+        : [];
+
+      if (data.conversationId) {
+        setActiveConversationId(data.conversationId);
+      }
+
+      setMessages([...INITIAL_MESSAGES, ...storedMessages]);
+      setHasMoreMessages(data.hasMore ?? false);
+    } catch {
+      // Keep the initial local welcome message if history cannot be loaded.
+    }
+  }, []);
+
+  useEffect(() => {
+    loadConversationMessages();
+    loadConversations();
+  }, [loadConversationMessages, loadConversations]);
+
+  const handleSwitchConversation = useCallback(async (conversationId: string) => {
+    if (conversationId === activeConversationId || isAssistantReplying) return;
+    setIsAssistantReplying(false);
+    await loadConversationMessages(conversationId);
+    addLog('Switched conversation.');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId, isAssistantReplying, loadConversationMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -152,6 +176,7 @@ export default function App() {
     setMessages([...INITIAL_MESSAGES]);
     setIsAssistantReplying(false);
     setHasMoreMessages(false);
+    setActiveConversationId(null);
     addLog('Starting new conversation...');
 
     if (googleStatus.connected) {
@@ -159,7 +184,10 @@ export default function App() {
         const response = await fetch('/api/conversations/new', { method: 'POST' });
 
         if (response.ok) {
+          const data = await response.json();
+          setActiveConversationId(data.conversationId ?? null);
           addLog('New conversation created.');
+          loadConversations();
         } else {
           addLog('New conversation created locally (server sync skipped).');
         }
@@ -180,7 +208,8 @@ export default function App() {
 
     try {
       const before = oldestMessage.timestamp.toISOString();
-      const response = await fetch(`/api/conversations/history?limit=50&before=${encodeURIComponent(before)}`, {
+      const convParam = activeConversationId ? `&conversationId=${encodeURIComponent(activeConversationId)}` : '';
+      const response = await fetch(`/api/conversations/history?limit=50&before=${encodeURIComponent(before)}${convParam}`, {
         cache: 'no-store',
       });
 
@@ -391,6 +420,7 @@ export default function App() {
       addLog('Assistant request failed.');
     } finally {
       setIsAssistantReplying(false);
+      loadConversations();
     }
   };
 
@@ -416,32 +446,38 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           <div>
             <h2 className="px-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Chat History
+              Conversations
             </h2>
-            {chatHistoryEntries.length > 0 ? (
+            {conversations.length > 0 ? (
               <div className="space-y-1.5">
-                {chatHistoryEntries.map((entry) => (
+                {conversations.map((conv) => (
                   <button
-                    key={entry.id}
+                    key={conv.id}
                     type="button"
-                    onClick={() => handleJumpToMessage(entry.id)}
-                    className="w-full rounded-xl border border-transparent bg-white px-3 py-2.5 text-left transition-colors hover:border-indigo-100 hover:bg-indigo-50/60"
+                    onClick={() => handleSwitchConversation(conv.id)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      conv.id === activeConversationId
+                        ? 'border-indigo-200 bg-indigo-50/80'
+                        : 'border-transparent bg-white hover:border-indigo-100 hover:bg-indigo-50/60'
+                    }`}
                   >
                     <div className="flex items-center gap-2">
-                      <MessageSquareText className="h-3.5 w-3.5 flex-shrink-0 text-indigo-500" />
+                      <MessageSquareText className={`h-3.5 w-3.5 flex-shrink-0 ${
+                        conv.id === activeConversationId ? 'text-indigo-600' : 'text-indigo-400'
+                      }`} />
                       <span className="truncate text-xs font-semibold text-slate-700">
-                        {entry.text}
+                        {conv.preview || conv.title || 'New conversation'}
                       </span>
                     </div>
                     <span className="mt-1 block pl-5 text-[10px] font-mono text-slate-400">
-                      {formatSidebarTimestamp(entry.timestamp)}
+                      {formatRelativeTime(conv.updated_at)}
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
               <p className="px-3 text-xs leading-relaxed text-slate-400">
-                Your previous prompts will appear here as you chat.
+                Your conversations will appear here.
               </p>
             )}
           </div>
@@ -621,11 +657,20 @@ function toMessageFromHistoryApi(value: HistoryApiMessage): Message | null {
   };
 }
 
-function formatSidebarTimestamp(timestamp: Date) {
-  return timestamp.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 function formatToolActionText(toolCalls: ChatApiToolCall[]) {
