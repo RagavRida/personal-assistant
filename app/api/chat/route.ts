@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     message = typeof body?.message === 'string' ? body.message.trim() : '';
+    const clientTimeZone = typeof body?.timeZone === 'string' ? body.timeZone : undefined;
+    if (clientTimeZone) {
+      process.env.APP_TIME_ZONE = clientTimeZone;
+    }
   } catch {
     return NextResponse.json(
       {

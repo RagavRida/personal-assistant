@@ -303,6 +303,7 @@ export default function App() {
         },
         body: JSON.stringify({
           message: text,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
       const data = (await response.json().catch(() => ({}))) as ChatApiResponse;
@@ -646,6 +647,15 @@ export default function App() {
           isDisabled={isAssistantReplying || googleStatus.checking || !googleStatus.connected}
           disabledReason={inputDisabledReason}
         />
+
+        <div className="border-t border-gray-150 bg-white px-6 py-2 flex items-center justify-between text-[11px] text-gray-400">
+          <span>
+            🕐 OpenAI tool routing active · Calendar and Tasks run server-side
+          </span>
+          <span className="font-mono">
+            {Intl.DateTimeFormat().resolvedOptions().timeZone} · Deletes require confirmation
+          </span>
+        </div>
       </main>
     </div>
   );
