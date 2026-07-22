@@ -10,6 +10,18 @@ This application is a Personal Assistant built with Next.js that integrates with
 - **AI/LLM**: OpenAI API (gpt-4o) with Function Calling
 - **Authentication**: Custom Google OAuth2 flow with secure HTTP-only cookies
 
+## Architecture Diagram
+
+```mermaid
+graph TD
+    Client([User Browser]) -->|HTTP Requests| NextJS[Next.js App Router]
+    NextJS -->|API Routes| Backend[Backend Services]
+    
+    Backend <-->|Fetch/Store Auth Tokens & Chat History| Supabase[(Supabase PostgreSQL)]
+    Backend <-->|Prompts & Tool Calls| OpenAI(OpenAI gpt-4o)
+    Backend <-->|Read/Write Calendar & Tasks| Google(Google APIs)
+```
+
 ## Core Components
 ### 1. Authentication Flow
 - **Google OAuth**: Users authenticate with their Google accounts to grant the app access to Calendar and Tasks.
